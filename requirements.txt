@@ -1,7 +1,3 @@
-cloudscraper>=1.2.60
-loguru>=0.5.3
-
-# dev
-pytest
-build
-twine
+cloudscraper>=1.2.71
+loguru>=0.7.3
+requests>=2.33.1

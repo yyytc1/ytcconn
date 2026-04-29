@@ -6,13 +6,14 @@ import socket
 import traceback
 import threading
 import json
-
+from typing import Tuple, Union, Optional
+from requests import Response
 import cloudscraper
 import time
 
 from loguru import logger
 
-from .method import Method
+from method import Method
 
 _GLOBAL_PROXY_QUEUE = None
 
@@ -170,9 +171,23 @@ class Conn:
 		if isinstance(self.conn.headers, dict):
 			if key in self.conn.headers:
 				self.conn.headers.pop(key)
-
-	def request(self, method: Method, url: str, *args, timeout=(3, 5), return_res=False, raw=False, proxy=True, **kwargs):
-		status_code, j, t, res = None, None, None, None
+	
+	def request(
+		self,
+		method: Union[Method.POST, Method.GET, str],
+		url: str,
+		*args,
+		timeout=(3, 5),
+		return_res=False,
+		raw=True,
+		proxy=True,
+		**kwargs
+	) -> Union[
+		Optional[Response],
+		Tuple[Optional[int], Optional[str], Optional[dict]],
+		Tuple[Optional[int], Optional[str], Optional[dict], Optional[Response]]
+	]:
+		status_code, t, j, res = None, None, None, None
 		try:
 			# 强制短连接，减少连接占用
 			h = kwargs.get('headers', {})
