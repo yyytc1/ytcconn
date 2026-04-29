@@ -1,0 +1,7 @@
+cloudscraper>=1.2.60
+loguru>=0.5.3
+
+# dev
+pytest
+build
+twine

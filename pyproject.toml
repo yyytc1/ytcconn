@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel", "build"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ytcconn"
+version = "0.1.0"
+description = "A lightweight connection and proxy manager"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [{name="Your Name", email="you@example.com"}]
+license = {text = "MIT"}
+dependencies = [
+  "cloudscraper>=1.2.60",
+  "loguru>=0.5.3"
+]
