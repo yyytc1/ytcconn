@@ -1,0 +1,11 @@
+﻿# Build/artifact folders
+/dist/
+/build/
+/*.egg-info
+# Python cache
+__pycache__/
+*.pyc
+# Test / tooling
+.pytest_cache/
+.eggs/
+pip-wheel-metadata/

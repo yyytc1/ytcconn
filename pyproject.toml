@@ -9,8 +9,13 @@ description = "A lightweight connection and proxy manager"
 readme = "README.md"
 requires-python = ">=3.8"
 authors = [{name="Your Name", email="you@example.com"}]
-license = {text = "MIT"}
+license = "MIT"
 dependencies = [
   "cloudscraper>=1.2.60",
   "loguru>=0.5.3"
 ]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ytcconn"]
+exclude = ["legacy"]
