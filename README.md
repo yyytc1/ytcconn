@@ -19,6 +19,16 @@ python -m pip install -r requirements.txt
 pip install ytcconn
 ```
 
+如果你已经将代码发布到 GitHub（例如：https://github.com/yyytc1/ytcconn ），可以直接通过 pip 从 GitHub 安装：
+
+```powershell
+# 从主分支安装最新代码
+pip install git+https://github.com/yyytc1/ytcconn.git
+
+# 或者指定标签/commit：
+pip install git+https://github.com/yyytc1/ytcconn.git@main
+```
+
 ## 二、快速开始（最小示例）
 
 ```python
@@ -122,6 +132,22 @@ if res is not None:
     print(res.text[:200])
     res.close()
 c.close()
+```
+
+### 示例脚本
+
+仓库包含 `examples/` 目录，内含若干可直接运行的示例脚本：
+
+- `examples/example_basic.py`：最小 GET 请求示例
+- `examples/example_proxy_fetch.py`：演示如何启动后台代理抓取器并尝试使用代理
+- `examples/example_raw.py`：raw 模式示例，直接处理底层 Response
+
+在 PowerShell 中运行示例（假设虚拟环境已激活并在项目根目录）：
+
+```powershell
+python examples\example_basic.py
+python examples\example_proxy_fetch.py
+python examples\example_raw.py
 ```
 
 ## 五、注意事项与常见问题
