@@ -47,12 +47,12 @@ def start_proxy_fetcher(source_url, interval=1, ttl=30, maxsize=0):
 	global _GLOBAL_PROXY_QUEUE, _GLOBAL_PROXY_THREAD, _GLOBAL_PROXY_STOP_EVENT
 	if _GLOBAL_PROXY_THREAD is not None and _GLOBAL_PROXY_THREAD.is_alive():
 		return
-
+	
 	if _GLOBAL_PROXY_QUEUE is None:
 		_GLOBAL_PROXY_QUEUE = queue.Queue(maxsize=maxsize)
-
+	
 	_GLOBAL_PROXY_STOP_EVENT = threading.Event()
-
+	
 	def _fetch_loop():
 		conn = Conn(proxy=None, trust_env=False)
 		while not _GLOBAL_PROXY_STOP_EVENT.is_set():
@@ -64,17 +64,17 @@ def start_proxy_fetcher(source_url, interval=1, ttl=30, maxsize=0):
 						continue
 				except Exception:
 					pass
-
+				
 				res = None
 				try:
 					res = conn.request('GET', source_url, timeout=10, raw=True, proxy=False)
 				except Exception:
 					res = None
-
+				
 				if res is None:
 					time.sleep(interval)
 					continue
-
+				
 				try:
 					status = getattr(res, 'status_code', None)
 					if status == 200:
@@ -104,14 +104,14 @@ def start_proxy_fetcher(source_url, interval=1, ttl=30, maxsize=0):
 						res.close()
 					except Exception:
 						pass
-
+				
 				time.sleep(interval)
 			except Exception:
 				try:
 					time.sleep(interval)
 				except Exception:
 					pass
-
+	
 	_GLOBAL_PROXY_THREAD = threading.Thread(target=_fetch_loop, daemon=True)
 	_GLOBAL_PROXY_THREAD.start()
 
@@ -131,7 +131,7 @@ def stop_proxy_fetcher():
 
 
 class Conn:
-	def __init__(self, proxy=None, log_enable=True, log_trace=True, trust_env=False, proxy_source=None):
+	def __init__(self, proxy=None, log_enable=True, log_trace=True, log_depth=2, trust_env=False, proxy_source=None):
 		"""
 		:param proxy: 代理地址，格式为 username:password@host:port 或 host:port
 		:param token: Bearer Token，可选
@@ -139,12 +139,13 @@ class Conn:
 		self.proxy = proxy
 		self.log_enable = log_enable
 		self.log_trace = log_trace
+		self.log_depth = log_depth
 		self.working = True
 		self.trust_env = trust_env
 		if proxy_source:
 			start_proxy_fetcher(proxy_source)
 		self.init_conn()
-
+	
 	def init_conn(self):
 		self.conn = cloudscraper.create_scraper(
 			browser={
@@ -154,19 +155,19 @@ class Conn:
 			}
 		)
 		self.conn.trust_env = self.trust_env
-
+		
 		# 设置代理
 		if self.proxy:
 			self.conn.proxies = {
 				"http": f"http://{self.proxy}",
 				"https": f"http://{self.proxy}"
 			}
-
+	
 	def set_headers(self, key, value):
 		if self.conn.headers is None:
 			self.conn.headers = {}
 		self.conn.headers[key] = value
-
+	
 	def pop_headers(self, key):
 		if isinstance(self.conn.headers, dict):
 			if key in self.conn.headers:
@@ -193,7 +194,7 @@ class Conn:
 			h = kwargs.get('headers', {})
 			h['Connection'] = 'close'
 			kwargs['headers'] = h
-
+			
 			if raw:
 				try:
 					if proxy and self.proxy:
@@ -204,7 +205,7 @@ class Conn:
 				except:
 					res = None
 				return res
-
+			
 			# 非 raw 模式：解析 status/text/json，并确保关闭 res
 			try:
 				if proxy and self.proxy:
@@ -214,12 +215,12 @@ class Conn:
 				res = self.conn.request(method, url=url, timeout=timeout, *args, **kwargs)
 			except:
 				res = None
-
+			
 			if res is None:
 				if return_res:
 					return status_code, t, j, res
 				return status_code, t, j
-
+			
 			status_code = getattr(res, 'status_code', None)
 			try:
 				t = res.text
@@ -229,7 +230,7 @@ class Conn:
 				j = res.json()
 			except:
 				j = None
-
+			
 			if return_res:
 				return status_code, t, j, res
 			return status_code, t, j
@@ -240,7 +241,7 @@ class Conn:
 					res.close()
 			except:
 				pass
-
+	
 	def close(self):
 		try:
 			self.conn.close()
@@ -250,11 +251,14 @@ class Conn:
 			del self.conn
 		except:
 			pass
-
+	
 	def log(self, message):
 		if self.working and self.log_enable:
-			logger.info(f'{message}')
-
+			if self.log_depth > 1:
+				logger.opt(depth=self.log_depth).info(message)
+			else:
+				logger.info(f'{message}')
+	
 	def y_sleep(self, times):
 		for i in range(times):
 			try:
@@ -263,7 +267,7 @@ class Conn:
 				time.sleep(1)
 			except:
 				pass
-
+	
 	def tcp_alive(self, ip, port, timeout=2):
 		try:
 			with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -272,12 +276,12 @@ class Conn:
 		except:
 			if self.log_trace:
 				self.log(traceback.format_exc())
-
+	
 	def get_proxy(self, sk5_queue=None):
 		q = sk5_queue if sk5_queue is not None else _GLOBAL_PROXY_QUEUE
 		if q is None:
 			return None
-
+		
 		while self.working:
 			try:
 				sk5, end_time = q.get(timeout=1)
@@ -288,17 +292,17 @@ class Conn:
 					continue
 			except Exception:
 				continue
-
+			
 			if sk5 in ['None', None, '']:
 				continue
-
+			
 			if '|' in sk5:
 				base_str = '|'
 			elif '/' in sk5:
 				base_str = '/'
 			else:
 				base_str = ':'
-
+			
 			parts = sk5.replace('\n', '').split(base_str)
 			if len(parts) < 2:
 				continue
@@ -307,11 +311,11 @@ class Conn:
 				port = int(parts[1])
 			except Exception:
 				continue
-
+			
 			if not self.tcp_alive(host, port):
 				continue
 			return f'{host}:{port}'
-
+	
 	def change_proxy(self):
 		proxy = self.get_proxy()
 		if not proxy:
