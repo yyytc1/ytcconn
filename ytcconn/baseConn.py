@@ -13,7 +13,7 @@ import time
 
 from loguru import logger
 
-from method import Method
+from .method import Method
 
 _GLOBAL_PROXY_QUEUE = None
 
@@ -133,8 +133,8 @@ def stop_proxy_fetcher():
 class Conn:
 	def __init__(self, proxy=None, log_enable=True, log_trace=True, log_depth=2, trust_env=False, proxy_source=None):
 		"""
-		:param proxy: 代理地址，格式为 username:password@host:port 或 host:port
-		:param token: Bearer Token，可选
+		:param proxy: 浠ｇ悊鍦板潃锛屾牸寮忎负 username:password@host:port 鎴? host:port
+		:param token: Bearer Token锛屽彲閫?
 		"""
 		self.proxy = proxy
 		self.log_enable = log_enable
@@ -156,7 +156,6 @@ class Conn:
 		)
 		self.conn.trust_env = self.trust_env
 		
-		# 设置代理
 		if self.proxy:
 			self.conn.proxies = {
 				"http": f"http://{self.proxy}",
@@ -190,7 +189,6 @@ class Conn:
 	]:
 		status_code, t, j, res = None, None, None, None
 		try:
-			# 强制短连接，减少连接占用
 			h = kwargs.get('headers', {})
 			h['Connection'] = 'close'
 			kwargs['headers'] = h
@@ -206,7 +204,6 @@ class Conn:
 					res = None
 				return res
 			
-			# 非 raw 模式：解析 status/text/json，并确保关闭 res
 			try:
 				if proxy and self.proxy:
 					kwargs['proxies'] = self.proxy
@@ -235,7 +232,6 @@ class Conn:
 				return status_code, t, j, res
 			return status_code, t, j
 		finally:
-			# 非 raw 模式下，无论是否 return_res，都在返回前尝试关闭 res（与原 request_ 保持一致）
 			try:
 				if res is not None:
 					res.close()
@@ -316,11 +312,11 @@ class Conn:
 				continue
 			return f'{host}:{port}'
 	
-	def change_proxy(self):
-		proxy = self.get_proxy()
-		if not proxy:
+	def change_proxy(self, q=None):
+		self.proxy = self.get_proxy(q)
+		if not self.proxy:
 			return
 		self.conn.proxies = {
-			"http": f"http://{proxy}",
-			"https": f"http://{proxy}"
+			"http": f"http://{self.proxy}",
+			"https": f"http://{self.proxy}"
 		}
